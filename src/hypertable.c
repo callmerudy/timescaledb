@@ -455,6 +455,51 @@ hypertable_insert(Name schema_name,
 	heap_close(rel, RowExclusiveLock);
 }
 
+static bool
+hypertable_tuple_found(TupleInfo *ti, void *data)
+{
+	Hypertable **entry = data;
+
+	*entry = hypertable_from_tuple(ti->tuple);
+	return false;
+}
+
+Hypertable *
+hypertable_get_by_name(char *schema, char *name)
+{
+	Hypertable *ht = NULL;
+
+	hypertable_scan(schema,
+					name,
+					hypertable_tuple_found,
+					&ht,
+					AccessShareLock,
+					false);
+
+	return ht;
+}
+
+Hypertable *
+hypertable_get_by_id(int32 hypertable_id)
+{
+	ScanKeyData scankey[1];
+	Hypertable *ht = NULL;
+
+	ScanKeyInit(&scankey[0], Anum_hypertable_pkey_idx_id,
+				BTEqualStrategyNumber, F_INT4EQ,
+				Int32GetDatum(hypertable_id));
+
+	hypertable_scan_limit_internal(scankey,
+								   1,
+								   HYPERTABLE_ID_INDEX,
+								   hypertable_tuple_found,
+								   &ht,
+								   1,
+								   AccessShareLock,
+								   false);
+	return ht;
+}
+
 Chunk *
 hypertable_get_chunk(Hypertable *h, Point *point)
 {

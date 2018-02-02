@@ -32,6 +32,7 @@ typedef struct TupleInfo
 } TupleInfo;
 
 typedef bool (*tuple_found_func) (TupleInfo *ti, void *data);
+typedef bool (*tuple_filter_func) (TupleInfo *ti, void *data);
 
 typedef struct ScannerCtx
 {
